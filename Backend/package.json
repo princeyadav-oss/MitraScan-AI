@@ -1,0 +1,27 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node -e \"const { analyzeLabel } = require('./services/complianceEngine'); const result = analyzeLabel('Biscuit Manufacturer Net Quantity 200 g Mfg August 2026 MRP ₹85 inclusive of all taxes care@test.in Helpline 18001234567 Country of Origin India'); if (result.summary.failed) process.exit(1); console.log('Compliance engine smoke test passed');\"",
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.5",
+    "multer": "^2.3.0",
+    "puppeteer": "^25.10.0",
+    "sharp": "^0.35.4",
+    "tesseract.js": "^7.0.0"
+  }
+}
