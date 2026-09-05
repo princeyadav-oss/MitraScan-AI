@@ -224,6 +224,30 @@ main {
   padding: 29px;
 }
 
+.source-status {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -7px 0 15px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #f8fbf7;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.reset-button {
+  border: 0;
+  background: transparent;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 800;
+}
+
 .panel-heading {
   justify-content: space-between;
   gap: 18px;
@@ -274,6 +298,17 @@ main {
   border-color: #5c9f7b;
   background: #edf7ea;
   transform: translateY(-1px);
+}
+
+.upload-box.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.upload-box.is-disabled:hover {
+  border-color: #abc8b6;
+  background: var(--green-wash);
+  transform: none;
 }
 
 .upload-box input {
@@ -337,6 +372,14 @@ textarea:focus,
 input:focus {
   border-color: #65a887;
   box-shadow: 0 0 0 3px #e4f2e8;
+}
+
+textarea:disabled,
+input:disabled {
+  cursor: not-allowed;
+  background: #eef3ed;
+  color: #98a69d;
+  opacity: 0.75;
 }
 
 .form-row {

@@ -28,7 +28,13 @@ async function fetchProductPage(value) {
     headers: { 'User-Agent': 'MitraScan-AuditBot/1.0 (+legal-metrology-audit)' },
     signal: AbortSignal.timeout(20000),
   });
-  if (!response.ok) throw new Error(`Product page returned HTTP ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(response.status === 403
+      ? 'This marketplace denied automated access (HTTP 403). Try a label image or pasted OCR text, or use an approved marketplace API/feed.'
+      : `Product page returned HTTP ${response.status}`);
+    error.status = response.status === 403 ? 502 : response.status;
+    throw error;
+  }
   const html = await response.text();
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || parsedUrl.hostname;
   const text = extractPageText(html);
