@@ -1,5 +1,6 @@
-require('dotenv').config();
+const path = require('path');
 const fs = require('fs');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const browserCandidates = [
   process.env.PUPPETEER_EXECUTABLE_PATH,

@@ -8,27 +8,23 @@ The system can read a label image, analyze pasted OCR text, or inspect a public 
 
 ## Main features
 
-- Secure login and registration for inspectors.
+- Secure login and registration for inspectors with prominent Logout controls.
 - JWT-based authentication and role-based authorization.
-- Product label image upload.
-- Image cleanup and orientation correction with Sharp.
-- English OCR using Tesseract.js.
-- Manual OCR text input for testing and correction.
-- Seven declaration checks:
-  - Manufacturer, packer, or importer details.
-  - Common or generic product name.
-  - Net quantity and standard unit.
-  - Month and year of manufacture, packing, or import.
-  - Maximum Retail Price and inclusive-of-all-taxes wording.
-  - Consumer care phone, email, and address/designation.
-  - Country of origin.
+- **Live Camera Scanning**: direct real-time product label scanning from device camera with targeting reticle, flashlight/torch toggle, and barcode detection.
+- **Direct Auto-Filling**: automatic browser geolocation reverse-geocoding for City and State, with inspector auto-detection.
+- **🏆 The Truth Meter (Healthwashing & Deception Radar)**: scans front-of-pack marketing slogans ("Zero Sugar", "Real Fruit", "Oats Rich", "High Protein", "All Natural") and exposes back-of-pack contradictions with a 0–100% Deception Index.
+- **🛡️ Personalized Health Shield**: active bio-safety protection for **Diabetic (Type 2)**, **Hypertension (High BP)**, **Gluten-Free (Celiac)**, **Nut Allergy**, and **Child-Safe (<5 yrs)**.
+- **🗣️ Multilingual Regional Voice Assistant**: native speech synthesis in **Hindi (हिन्दी)**, **Marathi (मराठी)**, **Tamil (தமிழ்)**, **Telugu (తెలుగు)**, **Bengali (বাংলা)**, and **English**.
+- Product label image upload with Sharp normalization and Tesseract.js OCR.
+- **Health & Harmful Ingredient Screening**: scans for palm oil, trans fats, high fructose corn syrup, MSG, synthetic food dyes (Tartrazine, Sunset Yellow), and chemical preservatives (BHA, BHT, Sodium Benzoate).
+- **Audible Beep Alert**: synthesizes an alert beep sound via Web Audio API whenever suspicious or harmful ingredients are detected.
+- **Calorie & Diet Intelligence**: detects calories, protein, carbs, fats, sugars, and sodium; evaluates suitability for Calorie Deficit vs Calorie Intake/Surplus.
+- **Smart Calorie Tracker**: daily calorie budget tracking, remaining allowance progress bar, 1-click snack logging, and healthy deficit snack recommendations.
+- Seven mandatory Legal Metrology declaration checks under Legal Metrology Rules, 2011.
 - Public product URL audit for e-commerce listings.
 - Compliance score with pass, warning, and failure states.
-- Detected details for every declaration.
-- Clear violation/action text for missing or suspicious declarations.
-- PDF evidence report generation.
-- MongoDB Atlas storage through Mongoose.
-- Temporary in-memory storage for local demos when Atlas is not configured.
+- Downloadable PDF evidence report enriched with Healthwashing & Bio-Safety assessments.
+- MongoDB Atlas storage through Mongoose with in-memory fallback.
 
 ## Technology stack
 

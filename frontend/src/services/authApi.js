@@ -32,11 +32,17 @@ export async function register(details) {
 export async function getSession() {
   const token = getToken()
   if (!token) return null
-  const response = await fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
-  if (!response.ok) {
+  try {
+    const response = await fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!response.ok) {
+      clearSession()
+      return null
+    }
+    const result = await response.json()
+    return result.user
+  } catch (err) {
+    console.warn('Backend session check unavailable:', err.message)
     clearSession()
     return null
   }
-  const result = await response.json()
-  return result.user
 }

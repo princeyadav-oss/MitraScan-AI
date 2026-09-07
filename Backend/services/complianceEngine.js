@@ -8,6 +8,10 @@ const FIELD_DEFINITIONS = [
   { key: 'origin', label: 'Country of origin', patterns: [/country of origin|made in|product of/i], rule: 'Rule 6: imported commodities must declare the country of origin or manufacture.' },
 ];
 
+const { analyzeHealthAndNutrition } = require('./healthEngine');
+const { analyzeHealthwashing } = require('./healthwashingEngine');
+const { analyzeHealthShield } = require('./healthShieldEngine');
+
 function findEvidence(text, field, patterns, metadata) {
   if (field === 'productName' && metadata.productName) return metadata.productName;
   const line = text.split(/(?:\r?\n|\\n)/).map((value) => value.trim()).find((value) => patterns.some((pattern) => {
@@ -32,7 +36,24 @@ function analyzeLabel(text, metadata = {}) {
   const passed = checks.filter((check) => check.status === 'pass').length;
   const failed = checks.filter((check) => check.status === 'fail').length;
   const warnings = checks.filter((check) => check.status === 'warning').length;
-  return { ...metadata, productName: metadata.productName || checks.find((check) => check.key === 'productName')?.evidence || 'Unidentified product', ocrText: normalizedText, checks, score: Math.round((passed / checks.length) * 100), status: failed ? 'Non-compliant' : warnings ? 'Review required' : 'Compliant', summary: { total: checks.length, passed, failed, warnings }, inspectedAt: new Date().toISOString() };
+  const determinedProductName = metadata.productName || checks.find((check) => check.key === 'productName')?.evidence || 'Unidentified product';
+  const healthAnalysis = analyzeHealthAndNutrition(sourceText, determinedProductName);
+  const healthwashing = analyzeHealthwashing(sourceText, determinedProductName, healthAnalysis.nutrition);
+  const healthShield = analyzeHealthShield(sourceText, healthAnalysis.nutrition);
+
+  return {
+    ...metadata,
+    productName: determinedProductName,
+    ocrText: normalizedText,
+    checks,
+    score: Math.round((passed / checks.length) * 100),
+    status: failed ? 'Non-compliant' : warnings ? 'Review required' : 'Compliant',
+    summary: { total: checks.length, passed, failed, warnings },
+    healthAnalysis,
+    healthwashing,
+    healthShield,
+    inspectedAt: new Date().toISOString()
+  };
 }
 
 module.exports = { analyzeLabel };

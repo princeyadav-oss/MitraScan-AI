@@ -1,0 +1,22 @@
+{
+  "name": "mitrascan-ai",
+  "version": "1.0.0",
+  "description": "MitraScan AI - Legal Metrology & Health Intelligence Inspection System",
+  "private": true,
+  "scripts": {
+    "dev": "node run-dev.js",
+    "start": "node run-dev.js",
+    "backend": "cd Backend && npm start",
+    "frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "test:backend": "cd Backend && npm test"
+  },
+  "keywords": [
+    "legal-metrology",
+    "health-shield",
+    "ocr",
+    "calorie-tracker"
+  ],
+  "author": "",
+  "license": "ISC"
+}

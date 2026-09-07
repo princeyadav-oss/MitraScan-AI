@@ -1,0 +1,238 @@
+import { useEffect, useRef, useState } from 'react'
+
+function LiveCameraScanner({ isOpen, onClose, onCapture }) {
+  const videoRef = useRef(null)
+  const canvasRef = useRef(null)
+  const streamRef = useRef(null)
+  const barcodeIntervalRef = useRef(null)
+
+  const [devices, setDevices] = useState([])
+  const [selectedDeviceId, setSelectedDeviceId] = useState('')
+  const [torchOn, setTorchOn] = useState(false)
+  const [hasTorch, setHasTorch] = useState(false)
+  const [detectedBarcode, setDetectedBarcode] = useState('')
+  const [cameraError, setCameraError] = useState('')
+  const [capturing, setCapturing] = useState(false)
+
+  // Clean up all video tracks
+  function stopStream() {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
+    }
+    if (barcodeIntervalRef.current) {
+      clearInterval(barcodeIntervalRef.current)
+      barcodeIntervalRef.current = null
+    }
+  }
+
+  // Start camera stream
+  async function startCamera(deviceId = '') {
+    stopStream()
+    setCameraError('')
+    setDetectedBarcode('')
+
+    try {
+      const constraints = {
+        video: deviceId
+          ? { deviceId: { exact: deviceId } }
+          : { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      streamRef.current = stream
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play().catch(() => {})
+      }
+
+      // Check for torch capability
+      const track = stream.getVideoTracks()[0]
+      if (track && typeof track.getCapabilities === 'function') {
+        const caps = track.getCapabilities()
+        setHasTorch(Boolean(caps.torch))
+      }
+
+      // Enumerate cameras
+      const allDevices = await navigator.mediaDevices.enumerateDevices()
+      const videoInputs = allDevices.filter((d) => d.kind === 'videoinput')
+      setDevices(videoInputs)
+      if (!selectedDeviceId && videoInputs.length > 0) {
+        const currentTrack = stream.getVideoTracks()[0]
+        const currentSetting = currentTrack?.getSettings()
+        if (currentSetting?.deviceId) {
+          setSelectedDeviceId(currentSetting.deviceId)
+        }
+      }
+
+      // Barcode detection support if available in browser
+      if ('BarcodeDetector' in window) {
+        try {
+          const barcodeDetector = new window.BarcodeDetector({
+            formats: ['qr_code', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39']
+          })
+          barcodeIntervalRef.current = setInterval(async () => {
+            if (videoRef.current && videoRef.current.readyState >= 2) {
+              try {
+                const codes = await barcodeDetector.detect(videoRef.current)
+                if (codes && codes.length > 0) {
+                  setDetectedBarcode(codes[0].rawValue)
+                }
+              } catch {
+                // Ignore frame decode errors
+              }
+            }
+          }, 600)
+        } catch {
+          // BarcodeDetector initialization optional
+        }
+      }
+    } catch (err) {
+      console.error('Camera initialization failed:', err)
+      setCameraError(err.name === 'NotAllowedError'
+        ? 'Camera permission denied. Please allow camera access in your browser settings.'
+        : 'Could not access the camera. Make sure no other application is using it.')
+    }
+  }
+
+  useEffect(() => {
+    if (isOpen) {
+      startCamera(selectedDeviceId)
+    } else {
+      stopStream()
+    }
+    return () => stopStream()
+  }, [isOpen, selectedDeviceId])
+
+  async function toggleTorch() {
+    if (!streamRef.current || !hasTorch) return
+    const track = streamRef.current.getVideoTracks()[0]
+    if (!track) return
+    try {
+      const nextState = !torchOn
+      await track.applyConstraints({ advanced: [{ torch: nextState }] })
+      setTorchOn(nextState)
+    } catch (err) {
+      console.warn('Torch toggle failed:', err)
+    }
+  }
+
+  function handleCapture() {
+    if (!videoRef.current) return
+    setCapturing(true)
+
+    const video = videoRef.current
+    const canvas = canvasRef.current || document.createElement('canvas')
+    canvas.width = video.videoWidth || 1280
+    canvas.height = video.videoHeight || 720
+
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+    canvas.toBlob((blob) => {
+      setCapturing(false)
+      if (blob) {
+        const file = new File([blob], `live-scan-${Date.now()}.jpg`, { type: 'image/jpeg' })
+        stopStream()
+        onCapture(file, detectedBarcode)
+        onClose()
+      }
+    }, 'image/jpeg', 0.95)
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="camera-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="camera-modal-header">
+          <div>
+            <span className="camera-badge">LIVE SCANNER</span>
+            <h3>Scan Product Label</h3>
+          </div>
+          <button type="button" className="close-btn" onClick={onClose} aria-label="Close scanner">×</button>
+        </div>
+
+        <div className="camera-viewport-wrap">
+          {cameraError ? (
+            <div className="camera-error-view">
+              <span className="error-icon">⚠️</span>
+              <p>{cameraError}</p>
+              <button type="button" className="retry-camera-btn" onClick={() => startCamera(selectedDeviceId)}>
+                Retry Camera
+              </button>
+            </div>
+          ) : (
+            <>
+              <video ref={videoRef} autoPlay playsInline muted className="camera-video-stream" />
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+              {/* Viewfinder Reticle & Laser Beam */}
+              <div className="scanner-reticle">
+                <div className="reticle-corner top-left" />
+                <div className="reticle-corner top-right" />
+                <div className="reticle-corner bottom-left" />
+                <div className="reticle-corner bottom-right" />
+                <div className="scanner-laser" />
+              </div>
+
+              {detectedBarcode && (
+                <div className="barcode-detected-pill">
+                  <span>Detected Code:</span>
+                  <strong>{detectedBarcode}</strong>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="camera-modal-footer">
+          <div className="camera-controls-row">
+            {devices.length > 1 && (
+              <select
+                className="camera-select"
+                value={selectedDeviceId}
+                onChange={(e) => setSelectedDeviceId(e.target.value)}
+              >
+                {devices.map((device, idx) => (
+                  <option key={device.deviceId || idx} value={device.deviceId}>
+                    {device.label || `Camera ${idx + 1}`}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {hasTorch && (
+              <button
+                type="button"
+                className={`torch-btn ${torchOn ? 'is-active' : ''}`}
+                onClick={toggleTorch}
+                title="Toggle Torch/Flash"
+              >
+                {torchOn ? '🔦 Torch ON' : '💡 Torch'}
+              </button>
+            )}
+          </div>
+
+          <div className="camera-action-row">
+            <button type="button" className="secondary-button cancel-camera-btn" onClick={onClose}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="primary-button capture-btn"
+              disabled={Boolean(cameraError) || capturing}
+              onClick={handleCapture}
+            >
+              {capturing ? 'Capturing...' : '📸 Snap & Analyze Product'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default LiveCameraScanner
