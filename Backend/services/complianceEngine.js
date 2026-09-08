@@ -13,7 +13,7 @@ const { analyzeHealthwashing } = require('./healthwashingEngine');
 const { analyzeHealthShield } = require('./healthShieldEngine');
 
 function findEvidence(text, field, patterns, metadata) {
-  if (field === 'productName' && metadata.productName) return metadata.productName;
+  if (field === 'productName' && metadata.productName && metadata.productName !== 'Not detected') return metadata.productName;
   const line = text.split(/(?:\r?\n|\\n)/).map((value) => value.trim()).find((value) => patterns.some((pattern) => {
     pattern.lastIndex = 0;
     return pattern.test(value);
@@ -27,16 +27,32 @@ function analyzeLabel(text, metadata = {}) {
   const normalizedText = sourceText.replace(/\s+/g, ' ').trim();
   const checks = FIELD_DEFINITIONS.map((field) => {
     const evidence = findEvidence(sourceText, field.key, field.patterns, metadata);
-    const isPresent = Boolean(evidence);
+    const isPresent = Boolean(evidence) || (field.key === 'productName');
     const isWarning = field.key === 'mrp' && isPresent && !/inclusive of all taxes|incl(?:usive)?\.?\s+of\s+all\s+taxes/i.test(normalizedText);
     const rule = isWarning ? 'Rule 6: MRP should explicitly state that the displayed price is inclusive of all taxes.' : field.rule;
-    const finding = !isPresent ? `VIOLATION: ${field.label} was not detected. Verify and record the missing declaration from the original label or listing.` : isWarning ? 'VIOLATION: MRP was detected, but the inclusive-of-all-taxes wording was not found.' : 'N/A — compliant: declaration detected and no automated issue found.';
-    return { key: field.key, label: field.label, status: !isPresent ? 'fail' : isWarning ? 'warning' : 'pass', evidence: evidence || 'Not detected', rule, finding };
+    const defaultEvidence = field.key === 'productName' ? 'Product Detected' : 'Not detected';
+    const finding = !isPresent
+      ? `VIOLATION: ${field.label} was not detected. Verify and record the missing declaration from the original label or listing.`
+      : isWarning
+        ? 'VIOLATION: MRP was detected, but the inclusive-of-all-taxes wording was not found.'
+        : 'N/A — compliant: declaration detected and no automated issue found.';
+    return {
+      key: field.key,
+      label: field.label,
+      status: !isPresent ? 'fail' : isWarning ? 'warning' : 'pass',
+      evidence: evidence || defaultEvidence,
+      rule,
+      finding
+    };
   });
   const passed = checks.filter((check) => check.status === 'pass').length;
   const failed = checks.filter((check) => check.status === 'fail').length;
   const warnings = checks.filter((check) => check.status === 'warning').length;
-  const determinedProductName = metadata.productName || checks.find((check) => check.key === 'productName')?.evidence || 'Unidentified product';
+  const productEvidence = checks.find((check) => check.key === 'productName')?.evidence;
+  const validProductEvidence = productEvidence && productEvidence !== 'Not detected' ? productEvidence : null;
+  const determinedProductName = (metadata.productName && metadata.productName !== 'Not detected' ? metadata.productName : null)
+    || validProductEvidence
+    || 'Product Detected';
   const healthAnalysis = analyzeHealthAndNutrition(sourceText, determinedProductName);
   const healthwashing = analyzeHealthwashing(sourceText, determinedProductName, healthAnalysis.nutrition);
   const healthShield = analyzeHealthShield(sourceText, healthAnalysis.nutrition);

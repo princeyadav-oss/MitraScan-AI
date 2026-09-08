@@ -9,12 +9,12 @@ const DEFAULT_TARGETS = {
 }
 
 const HEALTHY_SNACK_IDEAS = [
-  { name: 'Roasted Makhana (Foxnuts)', cal: '95 kcal', tag: 'High Satiety', icon: '🌰' },
-  { name: 'Sprouted Moong Chaat', cal: '110 kcal', tag: 'High Protein & Fiber', icon: '🥗' },
-  { name: 'Air-Popped Spiced Popcorn', cal: '85 kcal', tag: 'High Volume', icon: '🍿' },
-  { name: 'Roasted Bengal Gram (Chana)', cal: '125 kcal', tag: 'Slow Carbs', icon: '🌾' },
-  { name: 'Greek Yogurt + Berries', cal: '120 kcal', tag: '15g Protein', icon: '🫐' },
-  { name: 'Baked Ragi / Oats Crisps', cal: '105 kcal', tag: 'Low GI', icon: '🍘' }
+  { name: 'Roasted Makhana (Foxnuts)', calories: 95, cal: '95 kcal', tag: 'High Satiety', icon: '🌰', protein: 3, carbs: 19, fat: 0.5 },
+  { name: 'Sprouted Moong Chaat', calories: 110, cal: '110 kcal', tag: 'High Protein & Fiber', icon: '🥗', protein: 8, carbs: 17, fat: 0.5 },
+  { name: 'Air-Popped Spiced Popcorn', calories: 85, cal: '85 kcal', tag: 'High Volume', icon: '🍿', protein: 3, carbs: 16, fat: 1 },
+  { name: 'Roasted Bengal Gram (Chana)', calories: 120, cal: '120 kcal', tag: 'Slow Carbs', icon: '🌾', protein: 7, carbs: 19, fat: 2 },
+  { name: 'Greek Yogurt + Berries', calories: 120, cal: '120 kcal', tag: '15g Protein', icon: '🫐', protein: 12, carbs: 11, fat: 1 },
+  { name: 'Baked Ragi / Oats Crisps', calories: 105, cal: '105 kcal', tag: 'Low GI', icon: '🍘', protein: 3, carbs: 16, fat: 1.5 }
 ]
 
 function CalorieTracker({ scannedItemToLog, onClearScannedLog }) {
@@ -97,6 +97,19 @@ function CalorieTracker({ scannedItemToLog, onClearScannedLog }) {
     }
   }
 
+  function handleLogQuickSnack(snack) {
+    const newItem = {
+      id: 'log-' + Date.now(),
+      name: snack.name,
+      calories: snack.calories || parseInt(snack.cal, 10) || 0,
+      protein: snack.protein || 0,
+      carbs: snack.carbs || 0,
+      fat: snack.fat || 0,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+    setLoggedItems((prev) => [newItem, ...prev])
+  }
+
   const totalConsumed = loggedItems.reduce((acc, cur) => acc + (cur.calories || 0), 0)
   const remainingCalories = targetCalories - totalConsumed
   const percentConsumed = Math.min(100, Math.round((totalConsumed / Math.max(1, targetCalories)) * 100))
@@ -123,7 +136,7 @@ function CalorieTracker({ scannedItemToLog, onClearScannedLog }) {
             className={`goal-btn ${goal === 'surplus' ? 'active' : ''}`}
             onClick={() => handleGoalChange('surplus')}
           >
-            ⚡ Calorie Surplus
+            ⚡ Calorie Intake / Bulk
           </button>
           <button
             type="button"
@@ -135,6 +148,7 @@ function CalorieTracker({ scannedItemToLog, onClearScannedLog }) {
         </div>
       </div>
 
+      {/* Target & Budget Summary Card */}
       <div className="tracker-summary-card">
         <div className="tracker-metrics-grid">
           <div className="metric-box">
@@ -144,49 +158,37 @@ function CalorieTracker({ scannedItemToLog, onClearScannedLog }) {
                 <input
                   type="number"
                   value={targetCalories}
-                  onChange={(e) => setTargetCalories(Number(e.target.value))}
+                  onChange={(e) => setTargetCalories(Math.max(500, parseInt(e.target.value, 10) || 0))}
                   onBlur={() => setIsEditingTarget(false)}
                   autoFocus
-                  className="target-input"
                 />
-                <button type="button" onClick={() => setIsEditingTarget(false)}>✓</button>
               </div>
             ) : (
               <div className="metric-value-wrap" onClick={() => setIsEditingTarget(true)} title="Click to edit target">
-                <strong className="metric-value">{targetCalories}</strong>
-                <small className="metric-unit">kcal ✎</small>
+                <span className="metric-value">{targetCalories}</span>
+                <span className="metric-unit">kcal ✎</span>
               </div>
             )}
           </div>
 
           <div className="metric-box">
             <span className="metric-label">CONSUMED TODAY</span>
-            <strong className="metric-value consumed-val">{totalConsumed}</strong>
-            <small className="metric-unit">kcal</small>
+            <span className="metric-value consumed-val">{totalConsumed}</span>
+            <span className="metric-unit">kcal</span>
           </div>
 
           <div className={`metric-box ${isOverBudget ? 'is-over' : 'is-good'}`}>
-            <span className="metric-label">
-              {goal === 'deficit'
-                ? (isOverBudget ? 'OVER DEFICIT LIMIT' : 'REMAINING DEFICIT')
-                : (isOverBudget ? 'SURPLUS EXCEEDED' : 'REMAINING TO GOAL')}
-            </span>
-            <strong className="metric-value remaining-val">
-              {Math.abs(remainingCalories)}
-            </strong>
-            <small className="metric-unit">{isOverBudget ? 'kcal over' : 'kcal left'}</small>
+            <span className="metric-label">{isOverBudget ? 'OVER BUDGET' : 'BUDGET REMAINING'}</span>
+            <span className="metric-value remaining-val">{Math.abs(remainingCalories)}</span>
+            <span className="metric-unit">kcal</span>
           </div>
         </div>
 
-        {/* Dynamic Progress Bar */}
+        {/* Progress bar */}
         <div className="calorie-progress-wrap">
           <div className="progress-labels">
-            <span>{percentConsumed}% consumed</span>
-            <span className={isOverBudget ? 'warning-text' : 'pass-text'}>
-              {goal === 'deficit'
-                ? (isOverBudget ? 'Deficit broken! Limit exceeded' : 'On Track for Calorie Deficit')
-                : (isOverBudget ? 'Surplus goal reached!' : 'Building towards intake goal')}
-            </span>
+            <span>Calorie Budget Utilized</span>
+            <strong>{percentConsumed}%</strong>
           </div>
           <div className="progress-track">
             <div
@@ -235,7 +237,7 @@ function CalorieTracker({ scannedItemToLog, onClearScannedLog }) {
 
         {loggedItems.length === 0 ? (
           <div className="empty-logs">
-            <p>No snacks logged today yet. Scan any product and click <b>"+ Log to Today's Calories"</b> to track automatically!</p>
+            <p>No snacks logged today yet. Scan any product and click <b>"+ Add This Snack to Calorie Tracker"</b> or <b>"+ Log Swap"</b> to track automatically!</p>
           </div>
         ) : (
           <div className="logged-items-list">
@@ -262,13 +264,20 @@ function CalorieTracker({ scannedItemToLog, onClearScannedLog }) {
         <span className="rec-title">💡 Smart Calorie Deficit Snack Ideas (&lt;130 kcal):</span>
         <div className="rec-chips-grid">
           {HEALTHY_SNACK_IDEAS.map((snack, idx) => (
-            <div className="rec-chip" key={idx}>
+            <button
+              type="button"
+              className="rec-chip"
+              key={idx}
+              onClick={() => handleLogQuickSnack(snack)}
+              title={`Click to log ${snack.name} directly`}
+            >
               <span className="chip-icon">{snack.icon}</span>
               <div className="chip-details">
                 <strong>{snack.name}</strong>
                 <small>{snack.cal} · {snack.tag}</small>
               </div>
-            </div>
+              <span className="chip-add-action">＋</span>
+            </button>
           ))}
         </div>
       </div>

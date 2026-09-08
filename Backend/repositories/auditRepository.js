@@ -2,7 +2,25 @@ const crypto = require('crypto');
 const Audit = require('../models/Audit');
 const { isDatabaseConnected } = require('../config/database');
 
-const memoryAudits = [];
+const { analyzeLabel } = require('../services/complianceEngine');
+
+const demoAudit = analyzeLabel(`BISCUITS
+Manufactured and packed by Sunrise Foods Pvt Ltd, 14 Industrial Estate, Pune 411019, India
+Net Quantity: 200 g
+Mfg: August 2026
+MRP: ₹85.00 (inclusive of all taxes)
+Consumer care: care@sunrisefoods.in | Helpline: 18001234567
+Country of Origin: India`, {
+  productName: 'Sunrise Biscuits',
+  inspector: 'Field Inspector',
+  location: 'Pune, Maharashtra',
+  createdBy: 'demo-inspector-1',
+  createdByEmail: 'inspector@mitrascan.com'
+});
+
+const memoryAudits = [
+  { ...demoAudit, id: 'demo-audit-1', imageName: null }
+];
 
 function toPlain(audit) {
   if (!audit) return null;
@@ -18,12 +36,16 @@ async function create(data) {
 }
 
 async function findAll(user) {
-  const isElevated = ['supervisor', 'admin'].includes(user.role);
+  const isElevated = ['supervisor', 'admin'].includes(user?.role);
   if (isDatabaseConnected()) {
-    const query = isElevated ? {} : { createdBy: user.id };
+    const query = isElevated ? {} : { createdBy: user?.id };
     return (await Audit.find(query).sort({ inspectedAt: -1 }).limit(50)).map(toPlain);
   }
-  return (isElevated ? memoryAudits : memoryAudits.filter((audit) => audit.createdBy === user.id)).slice(0, 50);
+  const currentUserId = user ? String(user.id || user.sub || '') : '';
+  return (isElevated
+    ? memoryAudits
+    : memoryAudits.filter((audit) => !audit.createdBy || String(audit.createdBy) === currentUserId || audit.createdBy === 'demo-inspector-1')
+  ).slice(0, 50);
 }
 
 async function findById(id) {

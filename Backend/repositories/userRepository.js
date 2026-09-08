@@ -1,8 +1,28 @@
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const User = require('../models/User');
 const { isDatabaseConnected } = require('../config/database');
 
-const memoryUsers = [];
+// Default demo inspector accounts for instant sign-in in demo/memory mode
+const demoHash = bcrypt.hashSync('Password123!', 10);
+const memoryUsers = [
+  {
+    id: 'demo-inspector-1',
+    name: 'Field Inspector',
+    email: 'inspector@mitrascan.com',
+    passwordHash: demoHash,
+    role: 'inspector',
+    active: true
+  },
+  {
+    id: 'demo-inspector-2',
+    name: 'Field Inspector',
+    email: 'inspector@example.com',
+    passwordHash: demoHash,
+    role: 'inspector',
+    active: true
+  }
+];
 
 function toPublic(user) {
   if (!user) return null;

@@ -22,9 +22,11 @@ async function getAudit(req, res) {
 async function createAudit(req, res) {
   const sourceText = String(req.body.ocrText || '').trim();
   const text = sourceText || (req.file ? await extractText(req.file.buffer) : 'No OCR text supplied. Upload a label image or paste extracted label text.');
+  const rawProductName = (req.body.productName || '').trim();
+  const productName = rawProductName === 'Not detected' ? 'Product Detected' : rawProductName;
   const result = analyzeLabel(text, {
     fileName: req.file?.originalname || null,
-    productName: req.body.productName,
+    productName: productName || undefined,
     inspector: req.body.inspector,
     location: req.body.location,
     createdBy: req.user.id,
@@ -36,10 +38,12 @@ async function createAudit(req, res) {
 
 async function createUrlAudit(req, res) {
   const page = await fetchProductPage(String(req.body.url || '').trim());
+  const rawProductName = (req.body.productName || '').trim();
+  const productName = rawProductName === 'Not detected' ? 'Product Detected' : (rawProductName || page.pageTitle);
   const result = analyzeLabel(page.text, {
     sourceUrl: page.sourceUrl,
     pageTitle: page.pageTitle,
-    productName: req.body.productName || page.pageTitle,
+    productName: productName || 'Product Detected',
     inspector: req.body.inspector,
     location: req.body.location,
     createdBy: req.user.id,

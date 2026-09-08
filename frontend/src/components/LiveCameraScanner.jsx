@@ -5,6 +5,8 @@ function LiveCameraScanner({ isOpen, onClose, onCapture }) {
   const canvasRef = useRef(null)
   const streamRef = useRef(null)
   const barcodeIntervalRef = useRef(null)
+  const countdownIntervalRef = useRef(null)
+  const captureRef = useRef(null)
 
   const [devices, setDevices] = useState([])
   const [selectedDeviceId, setSelectedDeviceId] = useState('')
@@ -13,9 +15,14 @@ function LiveCameraScanner({ isOpen, onClose, onCapture }) {
   const [detectedBarcode, setDetectedBarcode] = useState('')
   const [cameraError, setCameraError] = useState('')
   const [capturing, setCapturing] = useState(false)
+  const [countdown, setCountdown] = useState(3)
 
-  // Clean up all video tracks
+  // Clean up all video tracks & countdown timers
   function stopStream() {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current)
+      countdownIntervalRef.current = null
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop())
       streamRef.current = null
@@ -26,11 +33,36 @@ function LiveCameraScanner({ isOpen, onClose, onCapture }) {
     }
   }
 
+  // 3-second countdown to automatically scan product without clicking
+  function startAutoScanCountdown() {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current)
+      countdownIntervalRef.current = null
+    }
+    setCountdown(3)
+    let remaining = 3
+
+    countdownIntervalRef.current = setInterval(() => {
+      remaining -= 1
+      if (remaining > 0) {
+        setCountdown(remaining)
+      } else {
+        setCountdown(0)
+        clearInterval(countdownIntervalRef.current)
+        countdownIntervalRef.current = null
+        if (captureRef.current) {
+          captureRef.current()
+        }
+      }
+    }, 1000)
+  }
+
   // Start camera stream
   async function startCamera(deviceId = '') {
     stopStream()
     setCameraError('')
     setDetectedBarcode('')
+    setCountdown(3)
 
     try {
       const constraints = {
@@ -46,6 +78,8 @@ function LiveCameraScanner({ isOpen, onClose, onCapture }) {
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         await videoRef.current.play().catch(() => {})
+        // Auto-scan after 3 seconds
+        startAutoScanCountdown()
       }
 
       // Check for torch capability
@@ -120,7 +154,11 @@ function LiveCameraScanner({ isOpen, onClose, onCapture }) {
   }
 
   function handleCapture() {
-    if (!videoRef.current) return
+    if (!videoRef.current || capturing) return
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current)
+      countdownIntervalRef.current = null
+    }
     setCapturing(true)
 
     const video = videoRef.current
@@ -141,6 +179,8 @@ function LiveCameraScanner({ isOpen, onClose, onCapture }) {
       }
     }, 'image/jpeg', 0.95)
   }
+
+  captureRef.current = handleCapture
 
   if (!isOpen) return null
 
@@ -169,6 +209,14 @@ function LiveCameraScanner({ isOpen, onClose, onCapture }) {
               <video ref={videoRef} autoPlay playsInline muted className="camera-video-stream" />
               <canvas ref={canvasRef} style={{ display: 'none' }} />
 
+              {/* Auto-Scan 3-Second Floating Badge */}
+              <div className="auto-scan-pill">
+                <span className="pulsing-record-dot" />
+                <span>
+                  Auto-scanning in <strong>{countdown > 0 ? `${countdown}s` : 'capturing...'}</strong>
+                </span>
+              </div>
+
               {/* Viewfinder Reticle & Laser Beam */}
               <div className="scanner-reticle">
                 <div className="reticle-corner top-left" />
@@ -176,6 +224,15 @@ function LiveCameraScanner({ isOpen, onClose, onCapture }) {
                 <div className="reticle-corner bottom-left" />
                 <div className="reticle-corner bottom-right" />
                 <div className="scanner-laser" />
+
+                {countdown > 0 && !capturing && (
+                  <div className="countdown-display">
+                    <div className="countdown-ring">
+                      <span className="countdown-number">{countdown}</span>
+                    </div>
+                    <p className="countdown-label">Auto-scanning product...</p>
+                  </div>
+                )}
               </div>
 
               {detectedBarcode && (
@@ -190,19 +247,31 @@ function LiveCameraScanner({ isOpen, onClose, onCapture }) {
 
         <div className="camera-modal-footer">
           <div className="camera-controls-row">
-            {devices.length > 1 && (
-              <select
-                className="camera-select"
-                value={selectedDeviceId}
-                onChange={(e) => setSelectedDeviceId(e.target.value)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {devices.length > 1 && (
+                <select
+                  className="camera-select"
+                  value={selectedDeviceId}
+                  onChange={(e) => setSelectedDeviceId(e.target.value)}
+                >
+                  {devices.map((device, idx) => (
+                    <option key={device.deviceId || idx} value={device.deviceId}>
+                      {device.label || `Camera ${idx + 1}`}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              <button
+                type="button"
+                className="restart-timer-btn"
+                onClick={startAutoScanCountdown}
+                title="Restart 3-second auto-scan timer"
+                disabled={capturing || Boolean(cameraError)}
               >
-                {devices.map((device, idx) => (
-                  <option key={device.deviceId || idx} value={device.deviceId}>
-                    {device.label || `Camera ${idx + 1}`}
-                  </option>
-                ))}
-              </select>
-            )}
+                ⏱️ Restart (3s)
+              </button>
+            </div>
 
             {hasTorch && (
               <button
@@ -226,7 +295,11 @@ function LiveCameraScanner({ isOpen, onClose, onCapture }) {
               disabled={Boolean(cameraError) || capturing}
               onClick={handleCapture}
             >
-              {capturing ? 'Capturing...' : '📸 Snap & Analyze Product'}
+              {capturing
+                ? '⏳ Capturing & Analyzing...'
+                : countdown > 0
+                ? `📸 Auto-scanning (${countdown}s) · Click to Snap Now`
+                : '📸 Snap & Analyze Product'}
             </button>
           </div>
         </div>

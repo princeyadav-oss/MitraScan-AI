@@ -20,7 +20,7 @@ Mfg: August 2026
 Consumer care: care@nutrilife.in | Helpline: 18009876543
 Country of Origin: India`
 
-function AuditForm({ user, loading, message, onImageAudit, onUrlAudit }) {
+function AuditForm({ user, loading, message, onImageAudit, onUrlAudit, onResetAudit, hasActiveAudit, resetSignal }) {
   const [image, setImage] = useState(null)
   const [ocrText, setOcrText] = useState('')
   const [productName, setProductName] = useState('')
@@ -32,6 +32,17 @@ function AuditForm({ user, loading, message, onImageAudit, onUrlAudit }) {
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [detectingLocation, setDetectingLocation] = useState(false)
   const [locationBadge, setLocationBadge] = useState('')
+
+  // Reset inputs when parent triggers a reset signal
+  useEffect(() => {
+    if (resetSignal) {
+      setSourceMode('')
+      setImage(null)
+      setOcrText('')
+      setProductUrl('')
+      setProductName('')
+    }
+  }, [resetSignal])
 
   // Auto-fill inspector when user object is available
   useEffect(() => {
@@ -122,7 +133,7 @@ function AuditForm({ user, loading, message, onImageAudit, onUrlAudit }) {
   function handleLiveCapture(file, barcode) {
     setImage(file)
     setSourceMode('image')
-    const determinedName = productName || (barcode ? `Product [${barcode}]` : '')
+    const determinedName = productName || (barcode ? `Product [${barcode}]` : 'Product Detected')
     if (determinedName) setProductName(determinedName)
 
     const formData = new FormData()
@@ -139,7 +150,7 @@ function AuditForm({ user, loading, message, onImageAudit, onUrlAudit }) {
     if (!image && !ocrText.trim()) return
     const formData = new FormData()
     formData.append('ocrText', ocrText)
-    formData.append('productName', productName)
+    formData.append('productName', productName || 'Product Detected')
     formData.append('inspector', inspector)
     formData.append('location', location)
     if (image) formData.append('labelImage', image)
@@ -173,6 +184,9 @@ function AuditForm({ user, loading, message, onImageAudit, onUrlAudit }) {
     setOcrText('')
     setProductUrl('')
     setProductName('')
+    if (onResetAudit) {
+      onResetAudit()
+    }
   }
 
   return (
@@ -191,8 +205,8 @@ function AuditForm({ user, loading, message, onImageAudit, onUrlAudit }) {
             ? `Source selected: ${sourceMode === 'image' ? 'label image' : sourceMode === 'text' ? 'OCR text' : 'product URL'}`
             : 'Choose camera scan, file upload, or OCR text'}
         </span>
-        {sourceMode && (
-          <button type="button" className="reset-button" onClick={resetSource}>
+        {(sourceMode || hasActiveAudit) && (
+          <button type="button" className="reset-button" onClick={resetSource} title="Reset current inputs and latest audit details">
             Reset
           </button>
         )}

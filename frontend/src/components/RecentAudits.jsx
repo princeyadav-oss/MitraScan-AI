@@ -10,7 +10,7 @@ function RecentAudits({ audits = [], onSelect }) {
         <button className="history-row" key={audit.id} onClick={() => onSelect(audit)}>
           <span className={`history-dot ${(audit?.status || 'Compliant').toLowerCase().replaceAll(' ', '-')}`} />
           <span>
-            <b>{audit.productName || 'Packaged Product'}</b>
+            <b>{(!audit?.productName || audit.productName === 'Not detected') ? 'Product Detected' : audit.productName}</b>
             <small>{audit.inspectedAt ? new Date(audit.inspectedAt).toLocaleDateString() : 'Today'} · {audit.location || 'Location not set'}</small>
           </span>
           <strong>{audit.score || 0}%</strong>

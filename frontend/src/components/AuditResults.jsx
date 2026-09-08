@@ -12,9 +12,10 @@ function StatusPill({ status }) {
   )
 }
 
-function AuditResults({ audit, loading = false, onLogToCalorieTracker, selectedShields = [] }) {
+function AuditResults({ audit, loading = false, onLogToCalorieTracker, selectedShields = [], onReset }) {
   const [reporting, setReporting] = useState(false)
   const [loggedToTracker, setLoggedToTracker] = useState(false)
+  const [loggedSwapIndex, setLoggedSwapIndex] = useState(null)
   const [muted, setMuted] = useState(getMuteState())
 
   const summary = audit?.summary || { passed: 0, failed: 0, warnings: 0 }
@@ -31,6 +32,7 @@ function AuditResults({ audit, loading = false, onLogToCalorieTracker, selectedS
       playHealthAlertBeep()
     }
     setLoggedToTracker(false)
+    setLoggedSwapIndex(null)
   }, [audit?.id, health?.shouldBeep, healthShield?.hasAnyRisk])
 
   async function handleReport() {
@@ -47,7 +49,7 @@ function AuditResults({ audit, loading = false, onLogToCalorieTracker, selectedS
     if (!audit || !nutrition) return
     if (onLogToCalorieTracker) {
       onLogToCalorieTracker({
-        name: audit.productName || 'Scanned Snack',
+        name: (!audit.productName || audit.productName === 'Not detected') ? 'Product Detected' : audit.productName,
         calories: nutrition.calories || 0,
         protein: nutrition.protein || 0,
         carbs: nutrition.carbs || 0,
@@ -55,6 +57,18 @@ function AuditResults({ audit, loading = false, onLogToCalorieTracker, selectedS
       })
       setLoggedToTracker(true)
     }
+  }
+
+  function handleLogSwap(alt, index) {
+    if (!alt || !onLogToCalorieTracker) return
+    onLogToCalorieTracker({
+      name: `${alt.name} (Swap)`,
+      calories: Number(alt.calories) || 0,
+      protein: Number(alt.protein) || 3,
+      carbs: Number(alt.carbs) || 15,
+      fat: Number(alt.fat) || 1
+    })
+    setLoggedSwapIndex(index)
   }
 
   function toggleMute() {
@@ -115,11 +129,36 @@ function AuditResults({ audit, loading = false, onLogToCalorieTracker, selectedS
       <div className="panel-heading">
         <div>
           <p className="section-kicker">LATEST RESULT</p>
-          <h2>{audit.productName || 'Packaged Product'}</h2>
+          <h2>{(!audit.productName || audit.productName === 'Not detected') ? 'Product Detected' : audit.productName}</h2>
         </div>
-        <span className={`result-status ${(audit?.status || 'Compliant').toLowerCase().replaceAll(' ', '-')}`}>
-          {audit.status || 'Compliant'}
-        </span>
+        <div className="panel-heading-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {onReset && (
+            <button
+              type="button"
+              className="reset-button"
+              onClick={onReset}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '6px',
+                background: '#fdf2f2',
+                border: '1px solid #f8d7da',
+                color: '#dc3545',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+              title="Reset inspection details"
+            >
+              ↺ Reset
+            </button>
+          )}
+          <span className={`result-status ${(audit?.status || 'Compliant').toLowerCase().replaceAll(' ', '-')}`}>
+            {audit.status || 'Compliant'}
+          </span>
+        </div>
       </div>
 
       {/* 🛡️ PERSONALIZED HEALTH SHIELD DANGER ALERT */}
@@ -269,15 +308,52 @@ function AuditResults({ audit, loading = false, onLogToCalorieTracker, selectedS
             </div>
           </div>
 
-          {/* Healthy Deficit Alternatives when snack is not ideal */}
-          {!dietary?.isDeficitFriendly && dietary?.suggestedDeficitAlternatives && (
+          {/* Category-matched Healthier Deficit Alternatives */}
+          {dietary?.suggestedDeficitAlternatives && dietary.suggestedDeficitAlternatives.length > 0 && (
             <div className="healthy-alternatives-wrap">
-              <span className="alt-title">🌿 Healthier Deficit Alternatives for this Snack:</span>
-              <div className="alt-chips-row">
-                {dietary.suggestedDeficitAlternatives.slice(0, 3).map((alt, i) => (
-                  <div key={i} className="alt-chip">
-                    <strong>{alt.name}</strong>
-                    <small>{alt.calories} kcal ({alt.unit})</small>
+              <div className="alt-header-row">
+                <div className="alt-title-group">
+                  <span className="alt-title">
+                    🌿 Healthier Deficit Alternatives for this Snack
+                  </span>
+                  <span className="alt-subtitle">
+                    Lower-calorie, high-satiety craving swaps tailored for <strong className="alt-category-tag">{dietary?.category || nutrition?.category || 'Packaged Snack'}</strong>
+                  </span>
+                </div>
+                <span className="alt-category-badge">{dietary?.category || nutrition?.category || 'Snack'}</span>
+              </div>
+
+              <div className="alt-cards-grid">
+                {dietary.suggestedDeficitAlternatives.map((alt, i) => (
+                  <div key={i} className="alt-card">
+                    <div className="alt-card-top">
+                      <span className="alt-card-icon">{alt.icon || '🥗'}</span>
+                      <div className="alt-card-details">
+                        <strong className="alt-card-name">{alt.name}</strong>
+                        <span className="alt-card-pill">
+                          <b>{alt.calories} kcal</b> <small>· {alt.unit}</small>
+                        </span>
+                      </div>
+                    </div>
+                    {alt.benefit && (
+                      <p className="alt-card-benefit">{alt.benefit}</p>
+                    )}
+                    <div className="alt-card-bottom">
+                      <div className="alt-macros-row">
+                        {alt.protein !== undefined && <span className="alt-macro-tag">P: {alt.protein}g</span>}
+                        {alt.carbs !== undefined && <span className="alt-macro-tag">C: {alt.carbs}g</span>}
+                        {alt.fat !== undefined && <span className="alt-macro-tag">F: {alt.fat}g</span>}
+                      </div>
+                      <button
+                        type="button"
+                        className={`alt-swap-btn ${loggedSwapIndex === i ? 'logged' : ''}`}
+                        onClick={() => handleLogSwap(alt, i)}
+                        disabled={loggedSwapIndex === i}
+                        title={`Log ${alt.name} to Calorie Tracker`}
+                      >
+                        {loggedSwapIndex === i ? '✓ Swapped!' : '＋ Log Swap'}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -329,7 +405,7 @@ function AuditResults({ audit, loading = false, onLogToCalorieTracker, selectedS
             </span>
             <span className="check-name">
               <b>{check.label}</b>
-              <small>{check.evidence}</small>
+              <small>{check.key === 'productName' && check.evidence === 'Not detected' ? 'Product Detected' : check.evidence}</small>
             </span>
             <StatusPill status={check.status} />
           </div>

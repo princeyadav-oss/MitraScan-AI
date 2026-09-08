@@ -4,7 +4,8 @@ const { jwtSecret, jwtExpiresIn } = require('../config/env');
 const userRepository = require('../repositories/userRepository');
 
 function signToken(user) {
-  return jwt.sign({ sub: String(user._id || user.id), role: user.role, email: user.email, name: user.name }, jwtSecret, { expiresIn: jwtExpiresIn });
+  const userId = String(user._id || user.id);
+  return jwt.sign({ id: userId, sub: userId, role: user.role, email: user.email, name: user.name }, jwtSecret, { expiresIn: jwtExpiresIn });
 }
 
 async function register({ name, email, password, role = 'inspector' }) {

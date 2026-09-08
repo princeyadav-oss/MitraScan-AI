@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import AuditForm from './components/AuditForm'
 import AuditResults from './components/AuditResults'
 import RecentAudits from './components/RecentAudits'
@@ -8,11 +8,14 @@ import CalorieTracker from './components/CalorieTracker'
 import HealthShieldSelector from './components/HealthShieldSelector'
 import { createImageAudit, createUrlAudit, getAudits } from './services/auditApi'
 import { clearSession, getSession } from './services/authApi'
+import { stopSpeech } from './services/voiceAlert'
 import './App.css'
 
 function App() {
   const [audits, setAudits] = useState([])
   const [selectedAudit, setSelectedAudit] = useState(null)
+  const hasLoadedAudits = useRef(false)
+  const [resetSignal, setResetSignal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [user, setUser] = useState(undefined)
@@ -26,9 +29,28 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (!user) return
-    getAudits().then(setAudits).catch((error) => setMessage(error.message))
+    if (!user) {
+      hasLoadedAudits.current = false
+      return
+    }
+    getAudits()
+      .then((list) => {
+        setAudits(list || [])
+        if (!hasLoadedAudits.current && list && list.length > 0) {
+          hasLoadedAudits.current = true
+          setSelectedAudit(list[0])
+        }
+      })
+      .catch((error) => setMessage(error.message))
   }, [user])
+
+  function handleReset() {
+    setSelectedAudit(null)
+    setMessage('')
+    setItemToLog(null)
+    stopSpeech()
+    setResetSignal(Date.now())
+  }
 
   async function handleImageAudit(formData) {
     setLoading(true)
@@ -60,7 +82,7 @@ function App() {
     }
   }
 
-  const currentAudit = selectedAudit || audits[0]
+  const currentAudit = selectedAudit
   if (user === undefined) {
     return (
       <div className="app-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
@@ -78,9 +100,11 @@ function App() {
         user={user}
         onSignOut={() => {
           clearSession()
+          stopSpeech()
           setUser(null)
           setAudits([])
           setSelectedAudit(null)
+          hasLoadedAudits.current = false
         }}
       />
 
@@ -117,6 +141,9 @@ function App() {
               message={message}
               onImageAudit={handleImageAudit}
               onUrlAudit={handleUrlAudit}
+              onResetAudit={handleReset}
+              hasActiveAudit={Boolean(currentAudit)}
+              resetSignal={resetSignal}
             />
             <CalorieTracker
               scannedItemToLog={itemToLog}
@@ -130,6 +157,7 @@ function App() {
               loading={loading}
               onLogToCalorieTracker={(item) => setItemToLog(item)}
               selectedShields={selectedShields}
+              onReset={handleReset}
             />
             <RecentAudits audits={audits} onSelect={setSelectedAudit} />
           </section>

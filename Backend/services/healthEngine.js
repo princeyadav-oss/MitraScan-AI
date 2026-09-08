@@ -66,7 +66,7 @@ const SUSPICIOUS_INGREDIENT_RULES = [
 // Common snack category estimates when nutrition table is unparsed or partially visible
 const COMMON_SNACK_PROFILES = [
   {
-    matches: [/biscuit|cookie|wafer|cream\s*biscuit/i],
+    matches: [/biscuit|cookie|wafer|cream\s*biscuit|bourbon|parle|oreo|rusk|marie|hide\s*(?:and|&)\s*seek|good\s*day|monaco|krackjack|digestive|cracker|shortbread|bakery\s*toast/i],
     category: 'Biscuits & Cookies',
     estimatedCaloriesPer100g: 470,
     proteinPer100g: 6,
@@ -74,11 +74,10 @@ const COMMON_SNACK_PROFILES = [
     fatPer100g: 20,
     sugarPer100g: 28,
     servingSizeG: 30,
-    deficitRating: 'poor',
-    alternatives: ['Roasted Makhana (Foxnuts) with rock salt', 'Oatmeal walnut energy bites', 'Baked Ragi crispies']
+    deficitRating: 'poor'
   },
   {
-    matches: [/potato\s*chip|nacho|crisp|lays|bingo|kurkure|namkeen|bhujia|sev/i],
+    matches: [/potato\s*chip|nacho|crisp|lays|bingo|kurkure|namkeen|bhujia|sev|chivda|mixture|puffs|cheetos|doritos|pringles|aloo\s*bhujia|fried\s*snack|gathiya|murukku|chips/i],
     category: 'Chips & Fried Namkeen',
     estimatedCaloriesPer100g: 540,
     proteinPer100g: 5,
@@ -86,23 +85,21 @@ const COMMON_SNACK_PROFILES = [
     fatPer100g: 34,
     sugarPer100g: 3,
     servingSizeG: 30,
-    deficitRating: 'poor',
-    alternatives: ['Air-popped spicy popcorn (no butter)', 'Roasted salted chana (Bengal gram)', 'Sprouted moong chaat with lemon']
+    deficitRating: 'poor'
   },
   {
-    matches: [/noodle|ramen|pasta|maggi/i],
-    category: 'Instant Noodles / Pasta',
+    matches: [/noodle|ramen|pasta|maggi|yippee|top\s*ramen|chowmein|macaroni|spaghetti|wai\s*wai|knorr\s*soup|instant\s*noodle|cup\s*noodles/i],
+    category: 'Instant Noodles & Pasta',
     estimatedCaloriesPer100g: 430,
     proteinPer100g: 8,
     carbsPer100g: 62,
     fatPer100g: 17,
     sugarPer100g: 2,
     servingSizeG: 70,
-    deficitRating: 'poor',
-    alternatives: ['Zucchini / vegetable noodles stir-fry', 'Millet vermicelli with sauteed veggies', 'Boiled egg white chaat']
+    deficitRating: 'poor'
   },
   {
-    matches: [/chocolate|candy|sweet|mithai|caramel/i],
+    matches: [/chocolate|candy|sweet|mithai|caramel|toffee|dairy\s*milk|kitkat|kit\s*kat|5\s*star|five\s*star|snickers|lollipop|gummy|fudge|choc|gems|bar\s*one|perk|munch|cadbury|milkybar|dark\s*chocolate/i],
     category: 'Chocolates & Confectionery',
     estimatedCaloriesPer100g: 530,
     proteinPer100g: 7,
@@ -110,31 +107,461 @@ const COMMON_SNACK_PROFILES = [
     fatPer100g: 30,
     sugarPer100g: 50,
     servingSizeG: 25,
-    deficitRating: 'poor',
-    alternatives: ['Dark chocolate (>75% cocoa) - 1 small square', 'Dates stuffed with roasted almonds', 'Greek yogurt with cinnamon']
+    deficitRating: 'poor'
   },
   {
-    matches: [/juice|soda|cola|beverage|energy\s*drink/i],
-    category: 'Packaged Beverage / Soda',
+    matches: [/juice|soda|cola|beverage|energy\s*drink|pepsi|coca\s*cola|coke|fanta|sprite|red\s*bull|sting|maaza|frooti|real\s*fruit|tropicana|thums\s*up|mountain\s*dew|limca|monster|cold\s*drink|soft\s*drink/i],
+    category: 'Packaged Beverages & Soda',
     estimatedCaloriesPer100g: 45, // per 100ml
     proteinPer100g: 0,
     carbsPer100g: 11,
     fatPer100g: 0,
     sugarPer100g: 10.5,
     servingSizeG: 200,
-    deficitRating: 'poor',
-    alternatives: ['Chilled tender coconut water', 'Iced mint lemon water', 'Sparkling water with lime wedge', 'Unsweetened green tea']
+    deficitRating: 'poor'
+  },
+  {
+    matches: [/cake|pastry|muffin|croissant|brownie|donut|doughnut|bun|bread|cupcake|swiss\s*roll|plum\s*cake|pie|tart/i],
+    category: 'Bakery & Cakes',
+    estimatedCaloriesPer100g: 380,
+    proteinPer100g: 5,
+    carbsPer100g: 55,
+    fatPer100g: 16,
+    sugarPer100g: 26,
+    servingSizeG: 50,
+    deficitRating: 'poor'
+  },
+  {
+    matches: [/cereal|cornflakes|chocos|muesli|granola|rolled\s*oats|breakfast\s*cereal|energy\s*bar|protein\s*bar|cereal\s*bar|nutrition\s*bar/i],
+    category: 'Breakfast Cereals & Bars',
+    estimatedCaloriesPer100g: 390,
+    proteinPer100g: 7,
+    carbsPer100g: 72,
+    fatPer100g: 8,
+    sugarPer100g: 22,
+    servingSizeG: 40,
+    deficitRating: 'moderate'
+  },
+  {
+    matches: [/ice\s*cream|kulfi|gelato|popsicle|frozen\s*dessert|sundae|cornetto|chocobar|cassata|cone|sorbet/i],
+    category: 'Ice Creams & Frozen Desserts',
+    estimatedCaloriesPer100g: 220,
+    proteinPer100g: 4,
+    carbsPer100g: 26,
+    fatPer100g: 11,
+    sugarPer100g: 24,
+    servingSizeG: 75,
+    deficitRating: 'poor'
+  },
+  {
+    matches: [/cheese|mayo|mayonnaise|nutella|peanut\s*butter|butter|spread|cheese\s*slice|jam|marmalade/i],
+    category: 'Cheeses, Butters & Spreads',
+    estimatedCaloriesPer100g: 520,
+    proteinPer100g: 9,
+    carbsPer100g: 15,
+    fatPer100g: 45,
+    sugarPer100g: 10,
+    servingSizeG: 20,
+    deficitRating: 'poor'
   }
 ];
 
-const HEALTHY_DEFICIT_ALTERNATIVES = [
-  { name: 'Roasted Makhana (Foxnuts)', calories: 95, unit: '30g cup', benefit: 'Low calorie density, rich in magnesium, crunchy satisfying texture' },
-  { name: 'Sprouted Moong Chaat', calories: 110, unit: '1 bowl', benefit: 'High protein & fiber, keeps you full for hours, zero saturated fat' },
-  { name: 'Roasted Chana (Bengal Gram)', calories: 125, unit: '35g handful', benefit: 'Complex slow-digesting carbs with 7g plant protein' },
-  { name: 'Air-Popped Spiced Popcorn', calories: 85, unit: '2 cups', benefit: 'High volume snack that curbs appetite during calorie deficit' },
-  { name: 'Greek Yogurt with Blueberries', calories: 120, unit: '150g cup', benefit: '15g lean protein to prevent muscle loss during fat cut' },
-  { name: 'Baked Ragi (Finger Millet) Crisps', calories: 105, unit: '25g serving', benefit: 'High calcium, low glycemic index, zero refined flour' }
-];
+// Rich, Category-Tailored Healthier Deficit Alternatives (<140 kcal, nutrient-dense craving swaps)
+const CATEGORY_DEFICIT_ALTERNATIVES = {
+  'Biscuits & Cookies': [
+    {
+      name: 'Roasted Makhana (Foxnuts)',
+      calories: 95,
+      unit: '30g bowl',
+      protein: 3,
+      carbs: 19,
+      fat: 0.5,
+      icon: '🌰',
+      benefit: 'Crispy teatime crunch with 60% fewer calories than cream biscuits and zero trans fats.'
+    },
+    {
+      name: 'Baked Ragi & Oats Thins',
+      calories: 90,
+      unit: '25g (4 thins)',
+      protein: 3,
+      carbs: 16,
+      fat: 1.5,
+      icon: '🍘',
+      benefit: 'High fiber finger millet avoids insulin spikes and uses zero hydrogenated palm oil.'
+    },
+    {
+      name: 'Oatmeal Cinnamon Crunch Bites',
+      calories: 105,
+      unit: '25g serving',
+      protein: 3,
+      carbs: 18,
+      fat: 2,
+      icon: '🍪',
+      benefit: 'Satisfies sweet cookie cravings with whole rolled oats and zero refined white flour (maida).'
+    },
+    {
+      name: 'Roasted Flax & Chia Seed Crackers',
+      calories: 110,
+      unit: '3 crackers',
+      protein: 4,
+      carbs: 9,
+      fat: 6,
+      icon: '🌾',
+      benefit: 'Packed with heart-healthy Omega-3s and fiber that expands to keep you full for hours.'
+    }
+  ],
+  'Chips & Fried Namkeen': [
+    {
+      name: 'Air-Popped Spiced Popcorn',
+      calories: 85,
+      unit: '2 full cups (25g)',
+      protein: 3,
+      carbs: 16,
+      fat: 1,
+      icon: '🍿',
+      benefit: 'Huge volume crunch that tricks your appetite during calorie deficits with 75% less fat than potato chips.'
+    },
+    {
+      name: 'Roasted Spiced Chana (Bengal Gram)',
+      calories: 120,
+      unit: '35g handful',
+      protein: 7,
+      carbs: 19,
+      fat: 2,
+      icon: '🧆',
+      benefit: 'Crisp savory namkeen swap delivering 7g natural plant protein to preserve lean muscle.'
+    },
+    {
+      name: 'Sprouted Moong Chaat with Lemon',
+      calories: 105,
+      unit: '1 medium bowl (120g)',
+      protein: 8,
+      carbs: 17,
+      fat: 0.5,
+      icon: '🥗',
+      benefit: 'Tangy Indian street-chaat flavors with high live enzymes, dietary fiber, and almost zero saturated fat.'
+    },
+    {
+      name: 'Vacuum-Baked Beet & Carrot Crisps',
+      calories: 95,
+      unit: '30g bag',
+      protein: 2,
+      carbs: 18,
+      fat: 1.5,
+      icon: '🍠',
+      benefit: 'Real root vegetable chips baked at low temp with 70% lower oil absorption than regular chips.'
+    }
+  ],
+  'Instant Noodles & Pasta': [
+    {
+      name: 'Zucchini Zoodles / Herb Veggie Stir-Fry',
+      calories: 75,
+      unit: '1 full bowl (200g)',
+      protein: 3,
+      carbs: 8,
+      fat: 3,
+      icon: '🥒',
+      benefit: 'Delivers the slurpy noodle texture with 85% fewer calories and no deep-fried noodle cakes or MSG.'
+    },
+    {
+      name: 'Millet Vermicelli with Sautéed Veggies',
+      calories: 130,
+      unit: '1 bowl (120g cooked)',
+      protein: 4,
+      carbs: 26,
+      fat: 1.5,
+      icon: '🍜',
+      benefit: 'Slow-burning foxtail millet vermicelli loaded with carrots and peas, keeping hunger away.'
+    },
+    {
+      name: 'Shirataki Konjac Noodles in Ginger Broth',
+      calories: 45,
+      unit: '1 large soup bowl',
+      protein: 1,
+      carbs: 3,
+      fat: 0.5,
+      icon: '🍲',
+      benefit: 'Near-zero calorie glucomannan noodles in a warm, fragrant ginger-garlic broth.'
+    },
+    {
+      name: 'Boiled Egg White Chaat with Mint Chutney',
+      calories: 90,
+      unit: '3 egg whites diced',
+      protein: 11,
+      carbs: 2,
+      fat: 0.5,
+      icon: '🥚',
+      benefit: 'Pure high-protein savory snack that satisfies savory noodle cravings while fueling fat loss.'
+    }
+  ],
+  'Chocolates & Confectionery': [
+    {
+      name: 'Single Origin Dark Chocolate (85%+)',
+      calories: 110,
+      unit: '20g (2 squares)',
+      protein: 2,
+      carbs: 7,
+      fat: 9,
+      icon: '🍫',
+      benefit: 'Rich cocoa flavonoids satisfy intense chocolate cravings with 80% less sugar than milk chocolate.'
+    },
+    {
+      name: 'Medjool Date stuffed with Roasted Almond',
+      calories: 80,
+      unit: '1 filled date',
+      protein: 2,
+      carbs: 17,
+      fat: 1.5,
+      icon: '🍯',
+      benefit: 'Natural caramel sweetness loaded with potassium and fiber without refined sucrose or artificial flavor.'
+    },
+    {
+      name: 'Greek Yogurt with Cocoa & Fresh Berries',
+      calories: 115,
+      unit: '130g cup',
+      protein: 12,
+      carbs: 11,
+      fat: 1,
+      icon: '🍓',
+      benefit: 'Velvety chocolate dessert swap providing 12g lean protein to protect your metabolic rate.'
+    },
+    {
+      name: 'Frozen Dark Cocoa Banana Slices',
+      calories: 95,
+      unit: '4 slices dipped in raw cacao',
+      protein: 1.5,
+      carbs: 18,
+      fat: 2,
+      icon: '🍌',
+      benefit: 'Creamy frozen mouthfeel that quashes sweet cravings with natural whole-fruit sweetness.'
+    }
+  ],
+  'Packaged Beverages & Soda': [
+    {
+      name: 'Chilled Tender Coconut Water',
+      calories: 45,
+      unit: '1 fresh glass (240ml)',
+      protein: 1.5,
+      carbs: 9,
+      fat: 0.2,
+      icon: '🥥',
+      benefit: 'Natural isotonic hydration with potassium and magnesium, zero high fructose corn syrup or phosphoric acid.'
+    },
+    {
+      name: 'Sparkling Mint & Lime Fresca',
+      calories: 15,
+      unit: '300ml tall glass',
+      protein: 0.5,
+      carbs: 3,
+      fat: 0,
+      icon: '🍋',
+      benefit: 'Crisp bubbly carbonation and tart citrus burst that satisfies soda cravings with zero sugar.'
+    },
+    {
+      name: 'Spiced Indian Buttermilk (Chaas)',
+      calories: 55,
+      unit: '200ml glass',
+      protein: 3,
+      carbs: 4,
+      fat: 2,
+      icon: '🥛',
+      benefit: 'Cooling probiotic drink with roasted cumin and mint, aids digestion without any sugary syrups.'
+    },
+    {
+      name: 'Iced Hibiscus or Green Tea with Lemon',
+      calories: 8,
+      unit: '300ml glass',
+      protein: 0,
+      carbs: 2,
+      fat: 0,
+      icon: '🍵',
+      benefit: 'Loaded with EGCG antioxidants to support fat oxidation while consuming under 10 calories.'
+    }
+  ],
+  'Bakery & Cakes': [
+    {
+      name: 'Microwave Banana & Oat Mug Cake',
+      calories: 125,
+      unit: '1 individual mug',
+      protein: 5,
+      carbs: 22,
+      fat: 2,
+      icon: '🧁',
+      benefit: 'Fluffy warm cake texture made from ground oats and ripe banana with zero refined flour or butter.'
+    },
+    {
+      name: 'Steamed Ragi / Multi-Grain Idli with Podi',
+      calories: 110,
+      unit: '2 mini idlis',
+      protein: 4,
+      carbs: 22,
+      fat: 1,
+      icon: '🥟',
+      benefit: 'Fermented, oil-free steamed cake rich in complex carbs, calcium and gut-friendly probiotics.'
+    },
+    {
+      name: 'Toasted Sourdough with Light Hummus',
+      calories: 135,
+      unit: '1 slice + 2 tbsp hummus',
+      protein: 5,
+      carbs: 20,
+      fat: 3.5,
+      icon: '🍞',
+      benefit: 'Naturally fermented bread with lower glycemic impact paired with high-fiber chickpea spread.'
+    },
+    {
+      name: 'Warm Baked Apple Slices with Cinnamon',
+      calories: 80,
+      unit: '1 sliced apple',
+      protein: 0.5,
+      carbs: 20,
+      fat: 0.3,
+      icon: '🍎',
+      benefit: 'Warm, gooey apple-pie comfort with soluble pectin fiber and natural blood-sugar regulating cinnamon.'
+    }
+  ],
+  'Breakfast Cereals & Bars': [
+    {
+      name: 'Rolled Oats Porridge with Cinnamon',
+      calories: 130,
+      unit: '1 warm bowl (35g oats)',
+      protein: 5,
+      carbs: 24,
+      fat: 2.5,
+      icon: '🥣',
+      benefit: 'Beta-glucan soluble fiber stabilizes insulin and eliminates mid-morning sugar slumps.'
+    },
+    {
+      name: 'Puffed Rice (Murmura) Veggie Bhel',
+      calories: 90,
+      unit: '1.5 cups',
+      protein: 2,
+      carbs: 18,
+      fat: 1,
+      icon: '🥗',
+      benefit: 'Ultra-light, high-volume crunchy bowl tossed with fresh cucumbers, tomatoes and lemon juice.'
+    },
+    {
+      name: 'Chia Seed Pudding with Almond Milk',
+      calories: 120,
+      unit: '1 small jar',
+      protein: 4,
+      carbs: 10,
+      fat: 7,
+      icon: '🍮',
+      benefit: 'Hydrating gel fiber slows digestion and provides sustained physical energy throughout the day.'
+    }
+  ],
+  'Ice Creams & Frozen Desserts': [
+    {
+      name: 'Frozen Greek Yogurt Berry Swirl',
+      calories: 95,
+      unit: '1 cup (120g)',
+      protein: 9,
+      carbs: 12,
+      fat: 1,
+      icon: '🍦',
+      benefit: 'Creamy cold indulgence with 9g protein and live active cultures instead of heavy cream.'
+    },
+    {
+      name: 'Homemade Banana Nice-Cream with Cocoa',
+      calories: 105,
+      unit: '1 bowl',
+      protein: 2,
+      carbs: 24,
+      fat: 0.5,
+      icon: '🍌',
+      benefit: '100% real fruit blended smooth; mimics soft-serve ice cream with zero dairy fat or cane sugar.'
+    },
+    {
+      name: 'Fresh Watermelon-Mint Popsicle',
+      calories: 40,
+      unit: '1 popsicle',
+      protein: 0.5,
+      carbs: 9,
+      fat: 0,
+      icon: '🍉',
+      benefit: 'Pure cold watermelon hydration with zero artificial colors, corn syrup, or stabilizers.'
+    }
+  ],
+  'Cheeses, Butters & Spreads': [
+    {
+      name: 'Whipped Paneer / Cottage Cheese Spread',
+      calories: 75,
+      unit: '40g (2 tbsp)',
+      protein: 8,
+      carbs: 2,
+      fat: 4,
+      icon: '🧀',
+      benefit: 'High casein protein spread with 60% less saturated fat and calories than commercial mayonnaise.'
+    },
+    {
+      name: 'Fresh Guacamole on Cucumber Slices',
+      calories: 95,
+      unit: '50g dip with cucumber rounds',
+      protein: 1.5,
+      carbs: 5,
+      fat: 8,
+      icon: '🥑',
+      benefit: 'Heart-healthy monounsaturated fats and crisp crunchy hydration instead of processed cheese.'
+    },
+    {
+      name: 'Roasted Garlic & White Bean Spread',
+      calories: 85,
+      unit: '3 tbsp spread',
+      protein: 4,
+      carbs: 13,
+      fat: 1,
+      icon: '🧄',
+      benefit: 'Savory rich taste with prebiotic dietary fiber and zero butterfat.'
+    }
+  ],
+  'Packaged Snack': [
+    {
+      name: 'Roasted Makhana (Foxnuts)',
+      calories: 95,
+      unit: '30g bowl',
+      protein: 3,
+      carbs: 19,
+      fat: 0.5,
+      icon: '🌰',
+      benefit: 'Low calorie density, rich in magnesium, crunchy satisfying texture for mid-day cravings.'
+    },
+    {
+      name: 'Sprouted Moong Chaat with Lemon',
+      calories: 105,
+      unit: '1 bowl (120g)',
+      protein: 8,
+      carbs: 17,
+      fat: 0.5,
+      icon: '🥗',
+      benefit: 'High protein & fiber, keeps you full for hours, zero saturated fat or palm oil.'
+    },
+    {
+      name: 'Roasted Spiced Chana (Bengal Gram)',
+      calories: 120,
+      unit: '35g handful',
+      protein: 7,
+      carbs: 19,
+      fat: 2,
+      icon: '🧆',
+      benefit: 'Complex slow-digesting carbs with 7g plant protein to sustain energy without crashes.'
+    },
+    {
+      name: 'Air-Popped Spiced Popcorn',
+      calories: 85,
+      unit: '2 cups (25g)',
+      protein: 3,
+      carbs: 16,
+      fat: 1,
+      icon: '🍿',
+      benefit: 'High volume, high fiber snack that curbs hunger during calorie deficits.'
+    }
+  ]
+};
+
+// Default fallback list for backwards compatibility
+const HEALTHY_DEFICIT_ALTERNATIVES = CATEGORY_DEFICIT_ALTERNATIVES['Packaged Snack'];
 
 /**
  * Extracts numeric nutrition declarations from OCR text.
@@ -276,17 +703,22 @@ function evaluateCalorieSuitability(nutrition, suspiciousAnalysis) {
     surplusVerdict = `Provides ${calories} kcal. Pair with a protein source (milk, whey, nuts) to balance macro intake.`;
   }
 
+  // Select category-specific deficit alternatives
+  const category = nutrition.category || 'Packaged Snack';
+  const categoryAlternatives = CATEGORY_DEFICIT_ALTERNATIVES[category] || CATEGORY_DEFICIT_ALTERNATIVES['Packaged Snack'];
+
   return {
     isDeficitFriendly,
     deficitBadge,
     deficitVerdict,
     surplusVerdict,
+    category,
     macroRatio: {
       proteinPct: Math.round((protein * 4 / Math.max(calories, 1)) * 100),
       carbsPct: Math.round((carbs * 4 / Math.max(calories, 1)) * 100),
       fatPct: Math.round((fat * 9 / Math.max(calories, 1)) * 100)
     },
-    suggestedDeficitAlternatives: HEALTHY_DEFICIT_ALTERNATIVES
+    suggestedDeficitAlternatives: categoryAlternatives
   };
 }
 
@@ -327,5 +759,6 @@ module.exports = {
   scanSuspiciousIngredients,
   extractNutrition,
   evaluateCalorieSuitability,
+  CATEGORY_DEFICIT_ALTERNATIVES,
   HEALTHY_DEFICIT_ALTERNATIVES
 };

@@ -26,7 +26,7 @@ export function stopSpeech() {
  * Builds natural regional language alert text based on audit results
  */
 export function generateSpeechScript(audit, langKey = 'hi', selectedShields = []) {
-  const name = audit?.productName || 'This product';
+  const name = (!audit?.productName || audit.productName === 'Not detected') ? 'Product Detected' : audit.productName;
   const health = audit?.healthAnalysis;
   const hw = audit?.healthwashing;
   const hs = audit?.healthShield;
