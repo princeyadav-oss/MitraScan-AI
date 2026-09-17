@@ -64,17 +64,28 @@ async function generateReport(audit) {
     `;
   }
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: browserExecutablePath || undefined,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      executablePath: browserExecutablePath || undefined,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+    });
+  } catch (launchErr) {
+    throw new Error(`PDF generation unavailable: Headless browser failed to start (${launchErr.message}). Ensure Chromium dependencies are installed in the hosting environment.`);
+  }
+
   try {
     const page = await browser.newPage();
     const displayProductName = (!audit.productName || audit.productName === 'Not detected') ? 'Product Detected' : audit.productName;
-    await page.setContent(`<html><style>body{font-family:Arial;color:#17231e;padding:40px}h1{color:#126b4d}table{border-collapse:collapse;width:100%;margin-top:24px}th,td{border:1px solid #ccd8d0;padding:10px;text-align:left;font-size:11px;vertical-align:top}th{background:#edf5ee;color:#285642}.pass{color:#16704e}.fail{color:#b33638}.warning{color:#a26716}.finding.fail{font-weight:bold;color:#b33638}.finding.warning{font-weight:bold;color:#a26716}small{color:#61726a}.source{margin-top:20px;padding:12px;background:#f3f7f1;color:#526c5c;font-size:11px}</style><h1>MitraScan compliance audit</h1><p><b>${escapeHtml(displayProductName)}</b> | ${escapeHtml(audit.status)} | Score ${audit.score}%</p><small>Audit ID: ${escapeHtml(audit.id)} | Inspected: ${escapeHtml(audit.inspectedAt)}</small><table><thead><tr><th>Declaration / status</th><th>Detected details</th><th>Applicable legal requirement</th><th>Violation / action</th></tr></thead><tbody>${rows}</tbody></table>${healthHtml}<p class="source">${source}<br>OCR text is retained in the audit record as machine-extracted evidence; it is not reproduced here as the legal conclusion. Final enforcement decisions require inspector verification against the original label.</p></html>`, { waitUntil: 'domcontentloaded', timeout: 10000 });
+    const sourceText = escapeHtml(audit.source || audit.fileName || 'MitraScan Automated Compliance Engine');
+    await page.setContent(`<html><style>body{font-family:Arial;color:#17231e;padding:40px}h1{color:#126b4d}table{border-collapse:collapse;width:100%;margin-top:24px}th,td{border:1px solid #ccd8d0;padding:10px;text-align:left;font-size:11px;vertical-align:top}th{background:#edf5ee;color:#285642}.pass{color:#16704e}.fail{color:#b33638}.warning{color:#a26716}.finding.fail{font-weight:bold;color:#b33638}.finding.warning{font-weight:bold;color:#a26716}small{color:#61726a}.source{margin-top:20px;padding:12px;background:#f3f7f1;color:#526c5c;font-size:11px}</style><h1>MitraScan compliance audit</h1><p><b>${escapeHtml(displayProductName)}</b> | ${escapeHtml(audit.status)} | Score ${audit.score}%</p><small>Audit ID: ${escapeHtml(audit.id)} | Inspected: ${escapeHtml(audit.inspectedAt)}</small><table><thead><tr><th>Declaration / status</th><th>Detected details</th><th>Applicable legal requirement</th><th>Violation / action</th></tr></thead><tbody>${rows}</tbody></table>${healthHtml}<p class="source">${sourceText}<br>OCR text is retained in the audit record as machine-extracted evidence; it is not reproduced here as the legal conclusion. Final enforcement decisions require inspector verification against the original label.</p></html>`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     return await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' } });
-  } finally { await browser.close(); }
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => null);
+    }
+  }
 }
 
 module.exports = { generateReport };

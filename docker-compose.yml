@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DB_NAME=mitrascan
+      - JWT_SECRET=mitrascan-super-secret-docker-key-2026
+      - JWT_EXPIRES_IN=8h
+      - FRONTEND_URL=http://localhost:5000
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:7.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

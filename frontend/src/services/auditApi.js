@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const rawEnvUrl = (import.meta.env.VITE_API_URL || '').trim();
+const API_URL = (() => {
+  if (!rawEnvUrl) return import.meta.env.DEV ? 'http://localhost:5000/api' : '/api';
+  const clean = rawEnvUrl.replace(/\/+$/, '');
+  return clean.endsWith('/api') ? clean : `${clean}/api`;
+})();
 const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('mitrascan_token') || ''}` })
 
 async function parseResponse(response, fallbackMessage) {

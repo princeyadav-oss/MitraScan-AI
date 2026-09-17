@@ -1,0 +1,46 @@
+services:
+  # -------------------------------------------------------------
+  # Backend API Web Service
+  # -------------------------------------------------------------
+  - type: web
+    name: mitrascan-backend
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && cd Backend && npm install
+    startCommand: cd Backend && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: mitrascan
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: FRONTEND_URL
+        sync: false
+
+  # -------------------------------------------------------------
+  # Frontend Static Site (Optional: If hosting frontend on Render)
+  # Alternatively, host frontend on Vercel for instant CDN edge delivery
+  # -------------------------------------------------------------
+  - type: static
+    name: mitrascan-frontend
+    plan: free
+    region: oregon
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: mitrascan-backend
+          property: host
